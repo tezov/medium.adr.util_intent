@@ -16,14 +16,16 @@ object UtilsIntent {
         activity: ComponentActivity,
         intent: Intent
     ) {
-        if(activity.lifecycle.currentState != Lifecycle.State.RESUMED) {
+        if (activity.lifecycle.currentState != Lifecycle.State.RESUMED) {
             throw IllegalStateException("Can be use only in activity resume state")
         }
         val lifecycleListener = object : DefaultLifecycleObserver {
             var hasReachedOnPause = false
+
             override fun onPause(owner: LifecycleOwner) {
                 hasReachedOnPause = true
             }
+
             override fun onResume(owner: LifecycleOwner) {
                 if (hasReachedOnPause) {
                     activity.lifecycle.removeObserver(this)
