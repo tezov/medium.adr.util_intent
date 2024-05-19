@@ -43,46 +43,50 @@ object UtilsIntent {
             }
             replace(length - 1, length, "")
         }
-        val intent = Intent()
-        intent.action = Intent.ACTION_SENDTO
-        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        intent.data = Uri.parse(mailto.toString())
+        val intent = Intent().apply {
+            action = Intent.ACTION_SENDTO
+            addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+            addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            data = Uri.parse(mailto.toString())
+        }
         continuation.succeedOnResume(activity = activity, intent = intent)
     }
 
     suspend fun sendTo(activity: ComponentActivity, subject: String? = null, text: String) =
         suspendCancellableCoroutine { continuation ->
-            val intent = Intent()
-            intent.action = Intent.ACTION_SEND
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-            subject?.let {
-                intent.putExtra(Intent.EXTRA_SUBJECT, it)
+            val intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                subject?.let {
+                    putExtra(Intent.EXTRA_SUBJECT, it)
+                }
+                putExtra(Intent.EXTRA_TEXT, text)
+                type = "text/plain"
             }
-            intent.putExtra(Intent.EXTRA_TEXT, text)
-            intent.type = "text/plain"
             continuation.succeedOnResume(activity = activity, intent = intent)
         }
 
     suspend fun callTo(activity: ComponentActivity, target: String) =
         suspendCancellableCoroutine { continuation ->
-            val intent = Intent()
-            intent.action = Intent.ACTION_DIAL
-            intent.data = Uri.parse("tel:$target")
+            val intent = Intent().apply {
+                action = Intent.ACTION_DIAL
+                data = Uri.parse("tel:$target")
+            }
             continuation.succeedOnResume(activity = activity, intent = intent)
         }
 
     suspend fun openLink(activity: ComponentActivity, uri: Uri) =
         suspendCancellableCoroutine { continuation ->
-            val intent = Intent()
-            intent.action = Intent.ACTION_VIEW
-            intent.data = uri
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            val intent = Intent().apply {
+                action = Intent.ACTION_VIEW
+                data = uri
+                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            }
             continuation.succeedOnResume(activity = activity, intent = intent)
         }
 }
