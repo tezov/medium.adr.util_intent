@@ -64,23 +64,22 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-// TODO: do not work anymore, the bottomsheet application choice do not make the activity to go onStop
-//                        Button(onClick = {
-//                            coroutine.launch {
-//                                Log.d("UtilsIntent", "sendTo")
-//                                UtilsIntent.sendTo(
-//                                    activity = this@MainActivity,
-//                                    subject = "test util intent",
-//                                    text = "text sent from application test medium util intent"
-//                                )
-//                                Log.d("UtilsIntent", "user is back to application")
-//                            }
-//                        }) {
-//                            Text(
-//                                text = "sendTo",
-//                                style = MaterialTheme.typography.titleLarge
-//                            )
-//                        }
+                        Button(onClick = {
+                            coroutine.launch {
+                                Log.d("UtilsIntent", "sendTo")
+                                UtilsIntent.sendTo(
+                                    activity = this@MainActivity,
+                                    subject = "test util intent",
+                                    text = "text sent from application test medium util intent"
+                                )
+                                Log.d("UtilsIntent", "user is back to application")
+                            }
+                        }) {
+                            Text(
+                                text = "sendTo",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
 
                         Button(onClick = {
                             coroutine.launch {
@@ -122,6 +121,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }
 
 

@@ -20,12 +20,12 @@ object UtilsIntent {
             throw IllegalStateException("Can be use only in activity resume state")
         }
         val lifecycleListener = object : DefaultLifecycleObserver {
-            var hasReachStop = false
-            override fun onStop(owner: LifecycleOwner) {
-                hasReachStop = true
+            var hasReachOnPause = false
+            override fun onPause(owner: LifecycleOwner) {
+                hasReachOnPause = true
             }
             override fun onResume(owner: LifecycleOwner) {
-                if (hasReachStop) {
+                if (hasReachOnPause) {
                     activity.lifecycle.removeObserver(this)
                     resumeWith(Result.success(Unit))
                 }
@@ -63,23 +63,22 @@ object UtilsIntent {
         continuation.succeedOnResume(activity = activity, intent = intent)
     }
 
-// TODO: need to find a fix because of the bottomsheet choice application
-//    @Throws(IllegalStateException::class)
-//    suspend fun sendTo(activity: ComponentActivity, subject: String? = null, text: String) =
-//        suspendCancellableCoroutine { continuation ->
-//            val intent = Intent().apply {
-//                action = Intent.ACTION_SEND
-//                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-//                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-//                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-//                subject?.let {
-//                    putExtra(Intent.EXTRA_SUBJECT, it)
-//                }
-//                putExtra(Intent.EXTRA_TEXT, text)
-//                type = "text/plain"
-//            }
-//            continuation.succeedOnResume(activity = activity, intent = intent)
-//        }
+    @Throws(IllegalStateException::class)
+    suspend fun sendTo(activity: ComponentActivity, subject: String? = null, text: String) =
+        suspendCancellableCoroutine { continuation ->
+            val intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                subject?.let {
+                    putExtra(Intent.EXTRA_SUBJECT, it)
+                }
+                putExtra(Intent.EXTRA_TEXT, text)
+                type = "text/plain"
+            }
+            continuation.succeedOnResume(activity = activity, intent = intent)
+        }
 
     @Throws(IllegalStateException::class)
     suspend fun callTo(activity: ComponentActivity, target: String) =
