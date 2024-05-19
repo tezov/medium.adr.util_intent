@@ -4,22 +4,31 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import com.tezov.medium.adr.util_intent.UtilsIntent.succeedOnResume
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.suspendCoroutine
 
 object UtilsIntent {
 
+    @Throws(IllegalStateException::class)
     private fun CancellableContinuation<Unit>.succeedOnResume(
         activity: ComponentActivity,
         intent: Intent
     ) {
+        if(activity.lifecycle.currentState != Lifecycle.State.RESUMED) {
+            throw IllegalStateException("Can be use only in activity resume state")
+        }
         val lifecycleListener = object : DefaultLifecycleObserver {
+            var hasReachStop = false
+            override fun onStop(owner: LifecycleOwner) {
+                hasReachStop = true
+            }
             override fun onResume(owner: LifecycleOwner) {
-                activity.lifecycle.removeObserver(this)
-                resumeWith(Result.success(Unit))
+                if (hasReachStop) {
+                    activity.lifecycle.removeObserver(this)
+                    resumeWith(Result.success(Unit))
+                }
             }
         }
         activity.lifecycle.addObserver(lifecycleListener)
@@ -27,6 +36,7 @@ object UtilsIntent {
         activity.startActivity(intent)
     }
 
+    @Throws(IllegalStateException::class)
     suspend fun emailTo(
         activity: ComponentActivity,
         target: String,
@@ -53,22 +63,25 @@ object UtilsIntent {
         continuation.succeedOnResume(activity = activity, intent = intent)
     }
 
-    suspend fun sendTo(activity: ComponentActivity, subject: String? = null, text: String) =
-        suspendCancellableCoroutine { continuation ->
-            val intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                subject?.let {
-                    putExtra(Intent.EXTRA_SUBJECT, it)
-                }
-                putExtra(Intent.EXTRA_TEXT, text)
-                type = "text/plain"
-            }
-            continuation.succeedOnResume(activity = activity, intent = intent)
-        }
+// TODO: need to find a fix because of the bottomsheet choice application
+//    @Throws(IllegalStateException::class)
+//    suspend fun sendTo(activity: ComponentActivity, subject: String? = null, text: String) =
+//        suspendCancellableCoroutine { continuation ->
+//            val intent = Intent().apply {
+//                action = Intent.ACTION_SEND
+//                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+//                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+//                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+//                subject?.let {
+//                    putExtra(Intent.EXTRA_SUBJECT, it)
+//                }
+//                putExtra(Intent.EXTRA_TEXT, text)
+//                type = "text/plain"
+//            }
+//            continuation.succeedOnResume(activity = activity, intent = intent)
+//        }
 
+    @Throws(IllegalStateException::class)
     suspend fun callTo(activity: ComponentActivity, target: String) =
         suspendCancellableCoroutine { continuation ->
             val intent = Intent().apply {
@@ -78,6 +91,7 @@ object UtilsIntent {
             continuation.succeedOnResume(activity = activity, intent = intent)
         }
 
+    @Throws(IllegalStateException::class)
     suspend fun openLink(activity: ComponentActivity, uri: Uri) =
         suspendCancellableCoroutine { continuation ->
             val intent = Intent().apply {
