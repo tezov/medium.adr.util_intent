@@ -5,16 +5,34 @@ import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.tezov.medium.adr.util_intent.UtilsIntent.succeedOnResume
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.suspendCoroutine
 
 object UtilsIntent {
+
+    private fun CancellableContinuation<Unit>.succeedOnResume(
+        activity: ComponentActivity,
+        intent: Intent
+    ) {
+        val lifecycleListener = object : DefaultLifecycleObserver {
+            override fun onResume(owner: LifecycleOwner) {
+                activity.lifecycle.removeObserver(this)
+                resumeWith(Result.success(Unit))
+            }
+        }
+        activity.lifecycle.addObserver(lifecycleListener)
+        invokeOnCancellation { activity.lifecycle.removeObserver(lifecycleListener) }
+        activity.startActivity(intent)
+    }
 
     suspend fun emailTo(
         activity: ComponentActivity,
         target: String,
         subject: String? = null,
         body: String? = null
-    ) = suspendCoroutine { continuation ->
+    ) = suspendCancellableCoroutine { continuation ->
         val mailto = StringBuilder().apply {
             append("mailto:").append(target).append("?")
             subject?.let {
@@ -31,17 +49,11 @@ object UtilsIntent {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.data = Uri.parse(mailto.toString())
-        activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onResume(owner: LifecycleOwner) {
-                activity.lifecycle.removeObserver(this)
-                continuation.resumeWith(Result.success(Unit))
-            }
-        })
-        activity.startActivity(intent)
+        continuation.succeedOnResume(activity = activity, intent = intent)
     }
 
     suspend fun sendTo(activity: ComponentActivity, subject: String? = null, text: String) =
-        suspendCoroutine { continuation ->
+        suspendCancellableCoroutine { continuation ->
             val intent = Intent()
             intent.action = Intent.ACTION_SEND
             intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
@@ -52,42 +64,25 @@ object UtilsIntent {
             }
             intent.putExtra(Intent.EXTRA_TEXT, text)
             intent.type = "text/plain"
-            activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
-                override fun onResume(owner: LifecycleOwner) {
-                    activity.lifecycle.removeObserver(this)
-                    continuation.resumeWith(Result.success(Unit))
-                }
-            })
-            activity.startActivity(intent)
+            continuation.succeedOnResume(activity = activity, intent = intent)
         }
 
     suspend fun callTo(activity: ComponentActivity, target: String) =
-        suspendCoroutine { continuation ->
+        suspendCancellableCoroutine { continuation ->
             val intent = Intent()
             intent.action = Intent.ACTION_DIAL
             intent.data = Uri.parse("tel:$target")
-            activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
-                override fun onResume(owner: LifecycleOwner) {
-                    activity.lifecycle.removeObserver(this)
-                    continuation.resumeWith(Result.success(Unit))
-                }
-            })
-            activity.startActivity(intent)
+            continuation.succeedOnResume(activity = activity, intent = intent)
         }
 
-    suspend fun openLink(activity: ComponentActivity, uri: Uri) = suspendCoroutine { continuation ->
-        val intent = Intent()
-        intent.action = Intent.ACTION_VIEW
-        intent.data = uri
-        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onResume(owner: LifecycleOwner) {
-                activity.lifecycle.removeObserver(this)
-                continuation.resumeWith(Result.success(Unit))
-            }
-        })
-        activity.startActivity(intent)
-    }
+    suspend fun openLink(activity: ComponentActivity, uri: Uri) =
+        suspendCancellableCoroutine { continuation ->
+            val intent = Intent()
+            intent.action = Intent.ACTION_VIEW
+            intent.data = uri
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            continuation.succeedOnResume(activity = activity, intent = intent)
+        }
 }
